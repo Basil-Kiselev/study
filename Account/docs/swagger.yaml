@@ -1,0 +1,22 @@
+basePath: /
+host: localhost:8080
+info:
+  contact: {}
+  description: developer desc
+  title: Account Service
+  version: "1.0"
+paths:
+  /ping:
+    get:
+      description: Возсращает pong
+      responses:
+        "200":
+          description: pong
+          schema:
+            type: string
+      summary: Хэлсчек сервиса
+      tags:
+      - health
+schemes:
+- http
+swagger: "2.0"
