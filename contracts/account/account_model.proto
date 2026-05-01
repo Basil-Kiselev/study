@@ -4,6 +4,8 @@ package account;
 
 import "google/protobuf/timestamp.proto";
 
+option go_package = "study/contracts/account;account";
+
 message CreateUser {
   string login = 1;
   string phone = 2;
