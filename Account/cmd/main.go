@@ -1,18 +1,17 @@
 package main
 
 import (
-	_ "account/docs"
-	"account/internal/config"
-	"account/internal/logger"
-	"account/repository"
-	"fmt"
+	"context"
 	"log"
+	_ "study/Account/docs"
+	"study/Account/internal/app"
+	"study/Account/internal/config"
+	"study/Account/internal/logger"
+	_ "study/Account/internal/migrations"
+
+	_ "github.com/lib/pq"
 
 	"github.com/gin-gonic/gin"
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 )
 
 // @title Account Service
@@ -22,28 +21,21 @@ import (
 // @BasePath /
 // @schemes http
 func main() {
+	ctx := context.Background()
+
 	cfg, err := config.Load()
 	if err != nil {
-		log.Fatalf("Fail to load config: $v", err)
+		log.Fatalf("Fail to load config: %v", err)
 	}
 
 	logger := logger.New()
 
-	db, err := gorm.Open(postgres.Open(cfg.DB), &gorm.Config{})
-	if err != nil {
-		logger.Error().Msgf("Fail to connect to database: %v", err)
-		return
+	application := app.New(cfg, &logger)
+
+	if err := application.Run(ctx); err != nil {
+		logger.Fatal().Err(err).Msg("error")
 	}
-	logger.Info().Msg("Database connected")
 
-	repo := repository.NewRepository(db, &logger)
-	_ = repo
-
-	router := gin.Default()
-
-	router.GET("/ping", PingExample)
-	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-	router.Run(fmt.Sprintf("%s:%d", cfg.Host, cfg.Port))
 }
 
 // PingExample godoc

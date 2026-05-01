@@ -16,6 +16,7 @@ generate: build-image
 		--go_out=contracts --go_opt=paths=source_relative \
 		--go-grpc_out=contracts --go-grpc_opt=paths=source_relative \
 		--grpc-gateway_out=contracts --grpc-gateway_opt=paths=source_relative \
+		contracts/pagination/pagination.proto \
 		contracts/account/account_model.proto \
 		contracts/account/account_service.proto
 	@echo "Done!"

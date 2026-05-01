@@ -2,29 +2,32 @@ syntax = "proto3";
 
 package account;
 
+import "account/account_model.proto";
 import "google/api/annotations.proto";
-// Import necessary packages for HTTP options
 import "google/protobuf/empty.proto";
+import "pagination/pagination.proto";
+
+option go_package = "study/contracts/account;account";
 
 service Account {
   rpc CreateUser(CreateUserRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      post: "account/api/v1/create_user"
-      body: "*" // Assuming 'bedy' was a typo for 'body'
+      post: "/account/api/v1/create_user"
+      body: "*"
     };
   }
   rpc GetUser(GetUserRequest) returns (GetUserResponse) {
-    option (google.api.http) = {get: "account/api/v1/users/{user_id}"};
+    option (google.api.http) = {get: "/account/api/v1/users/{user_id}"};
   }
   rpc GetUsers(GetUsersRequest) returns (GetUsersResponse) {
-    option (google.api.http) = {get: "account/api/v1/users"};
+    option (google.api.http) = {get: "/account/api/v1/users"};
   }
   rpc DeleteUser(DeleteUserRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {delete: "account/api/v1/users/{user_id}"};
+    option (google.api.http) = {delete: "/account/api/v1/users/{user_id}"};
   }
   rpc UpdateUser(UpdateUserRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      put: "account/api/v1/users/{user_id}"
+      put: "/account/api/v1/users/{user_id}"
       body: "*"
     };
   }
