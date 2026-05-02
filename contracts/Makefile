@@ -18,7 +18,8 @@ generate: build-image
 		--grpc-gateway_out=contracts --grpc-gateway_opt=paths=source_relative \
 		contracts/pagination/pagination.proto \
 		contracts/account/account_model.proto \
-		contracts/account/account_service.proto
+		contracts/account/account_service.proto \
+		contracts/auth/auth_service.proto
 	@echo "Done!"
 
 .PHONY: clean
