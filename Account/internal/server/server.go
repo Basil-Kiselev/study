@@ -25,20 +25,20 @@ func NewServer(accountService AccountService, logger *zerolog.Logger) *Server {
 }
 
 type AccountService interface {
-	CreateUser(context.Context, model.CreateUser) error
+	CreateUser(context.Context, model.CreateUser) (model.User, error)
 	GetUser(context.Context, uint64) (model.User, error)
 	GetUsers(context.Context, int, int) ([]model.User, error)
 	DeleteUser(context.Context, uint64) error
 	UpdateUser(context.Context, uint64, model.UpdateUser) error
 }
 
-func (s *Server) CreateUser(ctx context.Context, req *accountpb.CreateUserRequest) (*emptypb.Empty, error) {
-	user := mapper.PbToUserCreate(req.GetUser())
-	if err := s.accountService.CreateUser(ctx, user); err != nil {
+func (s *Server) CreateUser(ctx context.Context, req *accountpb.CreateUserRequest) (*accountpb.CreateUserResponse, error) {
+	user, err := s.accountService.CreateUser(ctx, mapper.PbToUserCreate(req.GetUser()))
+	if err != nil {
 		return nil, err
 	}
 
-	return &emptypb.Empty{}, nil
+	return &accountpb.CreateUserResponse{User: mapper.UserToPb(user)}, nil
 }
 
 func (s *Server) GetUser(ctx context.Context, req *accountpb.GetUserRequest) (*accountpb.GetUserResponse, error) {

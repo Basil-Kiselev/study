@@ -31,7 +31,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AccountClient interface {
-	CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*CreateUserResponse, error)
 	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error)
 	GetUsers(ctx context.Context, in *GetUsersRequest, opts ...grpc.CallOption) (*GetUsersResponse, error)
 	DeleteUser(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
@@ -46,9 +46,9 @@ func NewAccountClient(cc grpc.ClientConnInterface) AccountClient {
 	return &accountClient{cc}
 }
 
-func (c *accountClient) CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *accountClient) CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*CreateUserResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(emptypb.Empty)
+	out := new(CreateUserResponse)
 	err := c.cc.Invoke(ctx, Account_CreateUser_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -100,7 +100,7 @@ func (c *accountClient) UpdateUser(ctx context.Context, in *UpdateUserRequest, o
 // All implementations must embed UnimplementedAccountServer
 // for forward compatibility.
 type AccountServer interface {
-	CreateUser(context.Context, *CreateUserRequest) (*emptypb.Empty, error)
+	CreateUser(context.Context, *CreateUserRequest) (*CreateUserResponse, error)
 	GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error)
 	GetUsers(context.Context, *GetUsersRequest) (*GetUsersResponse, error)
 	DeleteUser(context.Context, *DeleteUserRequest) (*emptypb.Empty, error)
@@ -115,7 +115,7 @@ type AccountServer interface {
 // pointer dereference when methods are called.
 type UnimplementedAccountServer struct{}
 
-func (UnimplementedAccountServer) CreateUser(context.Context, *CreateUserRequest) (*emptypb.Empty, error) {
+func (UnimplementedAccountServer) CreateUser(context.Context, *CreateUserRequest) (*CreateUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateUser not implemented")
 }
 func (UnimplementedAccountServer) GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error) {
