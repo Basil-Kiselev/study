@@ -10,7 +10,7 @@ import "pagination/pagination.proto";
 option go_package = "study/contracts/account;account";
 
 service Account {
-  rpc CreateUser(CreateUserRequest) returns (google.protobuf.Empty) {
+  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {
     option (google.api.http) = {
       post: "/account/api/v1/create_user"
       body: "*"
@@ -35,6 +35,10 @@ service Account {
 
 message CreateUserRequest {
   CreateUser user = 1;
+}
+
+message CreateUserResponse {
+  User user = 1;
 }
 
 message GetUserRequest {

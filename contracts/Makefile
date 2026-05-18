@@ -19,7 +19,8 @@ generate: build-image
 		contracts/pagination/pagination.proto \
 		contracts/account/account_model.proto \
 		contracts/account/account_service.proto \
-		contracts/auth/auth_service.proto
+		contracts/auth/auth_service.proto \
+		contracts/gateway/gateway_service.proto
 	@echo "Done!"
 
 .PHONY: clean

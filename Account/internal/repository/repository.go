@@ -25,16 +25,16 @@ func NewRepository(db *gorm.DB, logger *zerolog.Logger) *Repository {
 	}
 }
 
-func (r *Repository) CreateUser(ctx context.Context, user model.User) error {
+func (r *Repository) CreateUser(ctx context.Context, user model.User) (model.User, error) {
 	userRepo := mapper.UserToRepoUser(user)
 	res := r.db.WithContext(ctx).
 		Clauses(clause.OnConflict{UpdateAll: true}).
 		Create(&userRepo)
 	if res.Error != nil {
 		r.logger.Error().Err(res.Error).Msg("failed to create user")
-		return res.Error
+		return model.User{}, res.Error
 	}
-	return nil
+	return mapper.RepoUserToUser(userRepo), nil
 }
 
 func (r *Repository) GetUser(ctx context.Context, id uint64) (model.User, error) {

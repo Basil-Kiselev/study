@@ -12,7 +12,7 @@ type Config struct {
 	AppEnv      string `env:"APP_ENV" required:"true" default:"development"`
 	LogLvl      string `env:"LOG_LEVEL" required:"true" default:"info"`
 	Host        string `env:"HTTP_HOST" required:"true" default:"localhost"`
-	Port        int    `env:"HTTP_PORT" required:"true" default:"9000"`
+	Port        int    `env:"HTTP_PORT" required:"true" default:"50051"`
 	DB          string `env:"DB_DSN" required:"true"`
 }
 

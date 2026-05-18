@@ -1,0 +1,157 @@
+syntax = "proto3";
+
+package gateway;
+
+import "account/account_model.proto";
+import "auth/auth_service.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "pagination/pagination.proto";
+
+option go_package = "study/contracts/gateway;gateway";
+
+service Gateway {
+  rpc Register(RegisterRequest) returns (RegisterResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/auth/register"
+      body: "*"
+    };
+  }
+
+  rpc Login(LoginRequest) returns (LoginResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/auth/login"
+      body: "*"
+    };
+  }
+
+  rpc Refresh(RefreshRequest) returns (RefreshResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/auth/refresh"
+      body: "*"
+    };
+  }
+
+  rpc Logout(LogoutRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/api/v1/auth/logout"
+      body: "*"
+    };
+  }
+
+  rpc ValidateToken(ValidateTokenRequest) returns (ValidateTokenResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/auth/validate"
+      body: "*"
+    };
+  }
+
+  rpc CreateUser(CreateUserRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/api/v1/users/create"
+      body: "*"
+    };
+  }
+
+  rpc GetUser(GetUserRequest) returns (GetUserResponse) {
+    option (google.api.http) = {get: "/api/v1/users/{user_id}"};
+  }
+
+  rpc GetCurrentUser(google.protobuf.Empty) returns (GetCurrentUserResponse) {
+    option (google.api.http) = {get: "/api/v1/users/me"};
+  }
+
+  rpc UpdateUser(UpdateUserRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      put: "/api/v1/users/{user_id}"
+      body: "*"
+    };
+  }
+
+  rpc DeleteUser(DeleteUserRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {delete: "/api/v1/users/{user_id}"};
+  }
+
+  rpc DeleteCurrentUser(google.protobuf.Empty) returns (google.protobuf.Empty) {
+    option (google.api.http) = {delete: "/api/v1/users/me"};
+  }
+}
+
+message RegisterRequest {
+  account.CreateUser user = 1;
+  string password = 2;
+}
+
+message RegisterResponse {
+  account.User user = 1;
+  auth.TokenPair tokens = 2;
+}
+
+message LoginRequest {
+  string login_or_email = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  account.User user = 1;
+  auth.TokenPair tokens = 2;
+}
+
+message RefreshRequest {
+  string refresh_token = 1;
+}
+
+message RefreshResponse {
+  auth.TokenPair tokens = 1;
+}
+
+message LogoutRequest {
+  string refresh_token = 1;
+}
+
+message ValidateTokenRequest {
+  string access_token = 1;
+}
+
+message ValidateTokenResponse {
+  uint64 user_id = 1;
+  bool is_valid = 2;
+}
+
+message CreateUserRequest {
+  account.CreateUser user = 1;
+}
+
+message GetUserRequest {
+  uint64 user_id = 1;
+}
+
+message GetUserResponse {
+  account.User user = 1;
+}
+
+message GetCurrentUserResponse {
+  account.User user = 1;
+}
+
+message GetUsersRequest {
+  pagination.Pagination pagination = 1;
+}
+
+message GetUsersResponse {
+  repeated account.User users = 1;
+  pagination.Pagination pagination = 2;
+}
+
+message UpdateUserRequest {
+  uint64 user_id = 1;
+  account.User user = 2;
+}
+
+message UpdateCurrentUserRequest {
+  account.User user = 1;
+}
+
+message DeleteUserRequest {
+  uint64 user_id = 1;
+}
