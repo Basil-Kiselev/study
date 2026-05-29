@@ -1,5 +1,5 @@
 services:
-  postgres:
+  account:
     image: postgres:latest
     environment:
       POSTGRES_USER: postgres
@@ -8,7 +8,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql
+      - postgres_account_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -16,8 +16,45 @@ services:
       retries: 5
     networks:
       - app-network
+  auth:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: auth
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_auth_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+  transaction:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: transaction
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_transaction_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
 volumes:
-  postgres_data:
+  postgres_account_data:
+  postgres_auth_data:
+  postgres_transaction_data:
 
 networks:
   app-network:
