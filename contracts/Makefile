@@ -20,7 +20,9 @@ generate: build-image
 		contracts/account/account_model.proto \
 		contracts/account/account_service.proto \
 		contracts/auth/auth_service.proto \
-		contracts/gateway/gateway_service.proto
+		contracts/gateway/gateway_service.proto \
+		contracts/transaction/transaction_model.proto \
+		contracts/transaction/transaction_service.proto
 	@echo "Done!"
 
 .PHONY: clean

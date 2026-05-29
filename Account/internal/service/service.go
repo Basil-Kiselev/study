@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"study/Account/internal/model"
 	"time"
 
@@ -26,6 +27,9 @@ type Repository interface {
 	GetUsers(context.Context, int, int) ([]model.User, error)
 	DeleteUser(context.Context, uint64) error
 	UpdateUser(context.Context, uint64, model.UpdateUser) error
+	GetBalance(context.Context, uint64) (float32, error)
+	UpdateBalance(context.Context, uint64, float32, model.OperationType) (float32, float32, error)
+	TransferBalance(context.Context, uint64, uint64, float32) error
 }
 
 func (s *AccountService) CreateUser(ctx context.Context, newUser model.CreateUser) (model.User, error) {
@@ -58,4 +62,127 @@ func (s *AccountService) DeleteUser(ctx context.Context, userID uint64) error {
 
 func (s *AccountService) UpdateUser(ctx context.Context, userID uint64, user model.UpdateUser) error {
 	return s.repo.UpdateUser(ctx, userID, user)
+}
+
+func (s *AccountService) GetBalance(ctx context.Context, userID uint64) (model.GetBalanceResponse, error) {
+	balance, err := s.repo.GetBalance(ctx, userID)
+	if err != nil {
+		s.logger.Error().Uint64("userID", userID).Msg("fail to get balance")
+		return model.GetBalanceResponse{}, err
+	}
+
+	return model.GetBalanceResponse{
+		Balance: balance,
+		UserID:  userID,
+	}, nil
+}
+
+func (s *AccountService) UpdateBalance(ctx context.Context, req model.UpdateBalanceRequest) (model.UpdateBalanceResponse, error) {
+	if req.Amount < 0 {
+		return model.UpdateBalanceResponse{}, fmt.Errorf("amount cannot be negative")
+	}
+
+	oldBalance, newBalance, err := s.repo.UpdateBalance(ctx, req.UserID, req.Amount, req.Type)
+	if err != nil {
+		return model.UpdateBalanceResponse{}, fmt.Errorf("fail to update balance: %w", err)
+	}
+
+	s.logger.Info().Uint64("user_id", req.UserID).
+		Float32("amount", req.Amount).
+		Float32("old_balance", oldBalance).
+		Float32("new_balance", newBalance).
+		Str("type", string(req.Type)).Msg("update balance successfully")
+
+	return model.UpdateBalanceResponse{
+		UserID:     req.UserID,
+		Amount:     req.Amount,
+		OldBalance: oldBalance,
+		NewBalance: newBalance,
+		Type:       req.Type,
+	}, nil
+}
+
+func (s *AccountService) TransferBalance(ctx context.Context, fromUserID, toUserID uint64, amount float32) error {
+	if amount < 0 {
+		return fmt.Errorf("transfer amount must be positive")
+	}
+
+	if toUserID == fromUserID {
+		return fmt.Errorf("user ids dont be equal")
+	}
+
+	err := s.repo.TransferBalance(ctx, fromUserID, toUserID, amount)
+	if err != nil {
+		return fmt.Errorf("fail to transfer: %w", err)
+	}
+
+	s.logger.Info().Uint64("from_user_id", fromUserID).
+		Uint64("to_user_id", toUserID).
+		Float32("amount", amount).
+		Msg("transfer successfully")
+
+	return nil
+}
+
+func (s *AccountService) Deposit(ctx context.Context, userID uint64, amount float32) (model.UpdateBalanceResponse, error) {
+	req := model.UpdateBalanceRequest{
+		UserID: userID,
+		Amount: amount,
+		Type:   model.OperationTypeDeposit,
+	}
+
+	res, err := s.UpdateBalance(ctx, req)
+	if err != nil {
+		return model.UpdateBalanceResponse{}, fmt.Errorf("fail deposit update user balance: %w", err)
+	}
+
+	s.logger.Info().Uint64("user_id", userID).
+		Str("type", string(model.OperationTypeDeposit)).
+		Float32("amount", amount).
+		Msg("update balance successfully")
+
+	return res, nil
+}
+
+func (s *AccountService) Withdraw(ctx context.Context, userID uint64, amount float32) (model.UpdateBalanceResponse, error) {
+	req := model.UpdateBalanceRequest{
+		UserID: userID,
+		Amount: amount,
+		Type:   model.OperationTypeCredit,
+	}
+
+	res, err := s.UpdateBalance(ctx, req)
+	if err != nil {
+		return model.UpdateBalanceResponse{}, fmt.Errorf("fail update credit user balance: %w", err)
+	}
+
+	s.logger.Info().Uint64("user_id", userID).
+		Str("type", string(model.OperationTypeCredit)).
+		Float32("amount", amount).
+		Msg("update balance successfully")
+
+	return res, nil
+}
+
+func (s *AccountService) Transfer(ctx context.Context, fromUserID, toUserID uint64, amount float32) (model.GetBalanceResponse, model.GetBalanceResponse, error) {
+	err := s.TransferBalance(ctx, fromUserID, toUserID, amount)
+	if err != nil {
+		return model.GetBalanceResponse{}, model.GetBalanceResponse{}, fmt.Errorf("fail to transfer balance: %w", err)
+	}
+
+	fromUserBalance, err := s.GetBalance(ctx, fromUserID)
+	if err != nil {
+		return model.GetBalanceResponse{}, model.GetBalanceResponse{}, fmt.Errorf("fail to get fromUser balance: %w", err)
+	}
+
+	toUserBalance, err := s.GetBalance(ctx, toUserID)
+	if err != nil {
+		return model.GetBalanceResponse{}, model.GetBalanceResponse{}, fmt.Errorf("fail to get toUser balance: %w", err)
+	}
+
+	s.logger.Info().Uint64("from_user_id", fromUserID).
+		Uint64("to_user_id", toUserID).
+		Float32("amount", amount).Msg("transfer successfully")
+
+	return fromUserBalance, toUserBalance, nil
 }

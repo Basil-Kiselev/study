@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package transaction;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "study/contracts/transaction;transaction";
+
+message Transaction {
+    string id = 1;
+    string type = 2;
+    string status = 3;
+    google.protobuf.Timestamp created_at = 4;
+    google.protobuf.Timestamp updated_at = 5;
+}
+
+message TransactionEntry {
+    string id = 1;
+    string transaction_id = 2;
+    string account_id = 3;
+    string direction = 4;
+    double amount = 5;
+}
+
+message TransactionDetails {
+    Transaction transaction = 1;
+    repeated TransactionEntry entries = 2;
+}

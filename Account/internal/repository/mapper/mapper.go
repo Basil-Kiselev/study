@@ -17,6 +17,8 @@ func UserToRepoUser(user model.User) repmodel.User {
 		Age:        user.Age,
 		CreatedAt:  user.CreatedAt,
 		UpdatedAt:  user.UpdatedAt,
+		Balance:    user.Balance,
+		IsDeleted:  user.IsDeleted,
 	}
 }
 
@@ -32,6 +34,8 @@ func RepoUserToUser(user repmodel.User) model.User {
 		Age:        user.Age,
 		CreatedAt:  user.CreatedAt,
 		UpdatedAt:  user.UpdatedAt,
+		Balance:    user.Balance,
+		IsDeleted:  user.IsDeleted,
 	}
 }
 
@@ -51,5 +55,7 @@ func UpdateUserToRepoUser(user model.User) repmodel.User {
 		LastName:   user.LastName,
 		MiddleName: user.MiddleName,
 		Age:        user.Age,
+		Balance:    user.Balance,
+		IsDeleted:  user.IsDeleted,
 	}
 }
