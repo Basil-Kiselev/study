@@ -9,6 +9,7 @@ import (
 
 func init() {
 	goose.AddNamedMigrationContext("20260427235121_initdb.go", upCreateUsersTable, downCreateUsersTable)
+	goose.AddNamedMigrationContext("20260518075413_add_index.go", upAddIndex, downAddIndex)
 }
 
 func upCreateUsersTable(ctx context.Context, tx *sql.Tx) error {
