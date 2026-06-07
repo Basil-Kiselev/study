@@ -132,8 +132,6 @@ func (r *Repository) Deposit(ctx context.Context, params model.DepositParams) (m
 			return fmt.Errorf("fail to update transaction status: %w", res.Error)
 		}
 
-		transactionRepo.Status = string(model.TransactionStatusCompleted)
-
 		result = model.TransactionDetails{
 			Transaction: mapper.RepoTranToModel(transactionRepo),
 			Entries:     mapper.RepoTrEntriesToModel([]repomodel.TransactionEntry{entryRepo}),
@@ -200,8 +198,6 @@ func (r *Repository) Transfer(ctx context.Context, params model.TransferParams) 
 			return fmt.Errorf("fail to update transaction: %w", res.Error)
 		}
 
-		repoTran.Status = string(model.TransactionStatusCompleted)
-
 		result = model.TransactionDetails{
 			Transaction: mapper.RepoTranToModel(repoTran),
 			Entries: []model.TransactionEntry{
@@ -259,8 +255,6 @@ func (r *Repository) Withdraw(ctx context.Context, params model.WithdrawParams) 
 			return fmt.Errorf("fail to update transaction: %w", res.Error)
 		}
 
-		repoTr.Status = string(model.TransactionStatusCompleted)
-
 		result = model.TransactionDetails{
 			Transaction: mapper.RepoTranToModel(repoTr),
 			Entries: []model.TransactionEntry{
@@ -275,4 +269,21 @@ func (r *Repository) Withdraw(ctx context.Context, params model.WithdrawParams) 
 	}
 
 	return result, nil
+}
+
+func (r *Repository) UpdateTransactionsStatus(ctx context.Context, transactionID uint64, status model.TransactionStatus) error {
+	res := r.db.WithContext(ctx).
+		Model(&repomodel.Transaction{}).
+		Where("id = ?", transactionID).
+		Update("status", status)
+
+	if res.Error != nil {
+		return fmt.Errorf("fail to update transaction status")
+	}
+
+	if res.RowsAffected == 0 {
+		return fmt.Errorf("transaction not found")
+	}
+
+	return nil
 }
