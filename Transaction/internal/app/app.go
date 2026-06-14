@@ -7,6 +7,7 @@ import (
 	"net"
 	"study/Transaction/internal/account"
 	"study/Transaction/internal/config"
+	"study/Transaction/internal/kafka"
 	"study/Transaction/internal/repository"
 	"study/Transaction/internal/server"
 	"study/Transaction/internal/service"
@@ -29,6 +30,7 @@ type App struct {
 	transactionServer  *server.Server
 	grpcServer         *grpc.Server
 	accountService     *account.Service
+	kafkaCli           *kafka.Kafka
 }
 
 func New(logger *zerolog.Logger, cfg *config.Config) *App {
@@ -132,7 +134,12 @@ func (a *App) getTransactionService(ctx context.Context) (*service.TransactionSe
 			return nil, fmt.Errorf("fail to get account service")
 		}
 
-		service := service.New(repo, a.logger, aService)
+		kafka, err := a.getKafkaClient()
+		if err != nil {
+			return nil, fmt.Errorf("fail to get kafka client: %w", err)
+		}
+
+		service := service.New(repo, a.logger, aService, kafka)
 		a.transactionService = service
 	}
 
@@ -160,9 +167,27 @@ func getGRPCServer(srv *server.Server) *grpc.Server {
 	return grpcSrv
 }
 
+func (a *App) getKafkaClient() (*kafka.Kafka, error) {
+	if a.kafkaCli == nil {
+		producer := kafka.NewProducer(kafka.DefaultProducerConfig(a.cfg.KafkaBrokers), a.logger)
+		kafkaCli := kafka.New(producer, a.cfg.KafkaBrokers, a.cfg.KafkaGroupID, a.logger)
+		a.kafkaCli = kafkaCli
+		a.logger.Info().Msg("kafka client created")
+	}
+
+	return a.kafkaCli, nil
+}
+
 func (a *App) Close() error {
 	if a.grpcServer != nil {
 		a.grpcServer.GracefulStop()
+	}
+
+	if a.kafkaCli != nil {
+		err := a.kafkaCli.Close()
+		if err != nil {
+			return fmt.Errorf("fail to close kafka cli")
+		}
 	}
 	return nil
 }
