@@ -3,7 +3,13 @@ package migrations
 import (
 	"context"
 	"database/sql"
+
+	"github.com/pressly/goose/v3"
 )
+
+func init() {
+	goose.AddNamedMigrationContext("20260523014946_add_balance_to_users.go", upAddBalanceToUsers, downAddBalanceToUsers)
+}
 
 func upAddBalanceToUsers(ctx context.Context, tx *sql.Tx) error {
 	_, err := tx.Exec(`

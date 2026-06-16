@@ -22,7 +22,7 @@ type AccountResponse struct {
 	RequestType string `json:"request_type"`
 	UserID      uint64 `json:"user_id"`
 	OperationID uint64 `json:"operation_id"`
-	Result      bool   `json:"result"`
+	Success     bool   `json:"success"`
 }
 
 func New(repo Repository, logger *zerolog.Logger, accountService *account.Service, kafka KafkaPublisher) *TransactionService {
@@ -181,13 +181,12 @@ func (s *TransactionService) HandleAccountResponse(ctx context.Context, topic st
 		Str("request_type", response.RequestType).
 		Uint64("user_id", response.UserID).
 		Uint64("operation_id", response.OperationID).
-		Bool("result", response.Result).
 		Msg("received account response from kafka")
 
 	var status model.TransactionStatus
 	var logMsg string
 
-	if response.Result {
+	if response.Success {
 		status = model.TransactionStatusCompleted
 		logMsg = "transcastion successfully"
 	} else {
