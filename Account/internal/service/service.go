@@ -2,7 +2,9 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"strconv"
 	"study/Account/internal/model"
 	"time"
 
@@ -12,15 +14,20 @@ import (
 type AccountService struct {
 	repo   Repository
 	logger *zerolog.Logger
+	kafka  KafkaPublisher
 }
 
-func NewAccountService(repo Repository, logger *zerolog.Logger) *AccountService {
+func NewAccountService(repo Repository, logger *zerolog.Logger, kafka KafkaPublisher) *AccountService {
 	return &AccountService{
 		repo:   repo,
 		logger: logger,
+		kafka:  kafka,
 	}
 }
 
+type KafkaPublisher interface {
+	Publish(ctx context.Context, topic string, key string, data any) error
+}
 type Repository interface {
 	CreateUser(context.Context, model.User) (model.User, error)
 	GetUser(context.Context, uint64) (model.User, error)
@@ -30,6 +37,21 @@ type Repository interface {
 	GetBalance(context.Context, uint64) (float32, error)
 	UpdateBalance(context.Context, uint64, float32, model.OperationType) (float32, float32, error)
 	TransferBalance(context.Context, uint64, uint64, float32) error
+}
+
+type TransactionRequest struct {
+	RequestType string `json:"request_type"`
+	UserID      uint64 `json:"user_id"`
+	OperationID uint64 `json:"operation_id"`
+	Amount      int64  `json:"amount"`
+	RecipientID uint64 `json:"recipient_id"`
+}
+
+type TransactionResponse struct {
+	RequestType string                 `json:"request_type"`
+	UserID      uint64                 `json:"user_id"`
+	OperationID uint64                 `json:"operation_id"`
+	Result      map[string]interface{} `json:"result"`
 }
 
 func (s *AccountService) CreateUser(ctx context.Context, newUser model.CreateUser) (model.User, error) {
@@ -185,4 +207,44 @@ func (s *AccountService) Transfer(ctx context.Context, fromUserID, toUserID uint
 		Float32("amount", amount).Msg("transfer successfully")
 
 	return fromUserBalance, toUserBalance, nil
+}
+
+func (s *AccountService) HandleTransaction(ctx context.Context, topic string, key string, data []byte) error {
+	s.logger.Info().Msg("handling transaction request")
+	var request TransactionRequest
+	var err error
+
+	err = json.Unmarshal(data, &request)
+	if err != nil {
+		return fmt.Errorf("fail to unmarshal json: %w", err)
+	}
+
+	result := map[string]any{
+		"request_type": request.RequestType,
+		"user_id":      request.UserID,
+		"success":      false,
+		"operation_id": request.OperationID,
+	}
+
+	switch request.RequestType {
+	case "deposit":
+		_, err = s.Deposit(ctx, request.UserID, float32(request.Amount/100.0))
+	case "withdraw":
+		_, err = s.Withdraw(ctx, request.UserID, float32(request.Amount/100.0))
+	case "transfer":
+		_, _, err = s.Transfer(ctx, request.UserID, request.RecipientID, float32(request.Amount/100.0))
+	default:
+		err = fmt.Errorf("invalid transaction request type: %s", request.RequestType)
+	}
+
+	if err != nil {
+		s.logger.Error().Err(err).Uint64("transaction_id", request.OperationID).Uint64("user_id", request.UserID).Msg("fail to handle transaction request")
+		s.kafka.Publish(ctx, "transaction_response", "key", result)
+		return fmt.Errorf("fail to handle transaction request: %w", err)
+	}
+
+	result["success"] = true
+	s.kafka.Publish(ctx, "transaction_response", strconv.FormatUint(request.UserID, 10), result)
+
+	return nil
 }

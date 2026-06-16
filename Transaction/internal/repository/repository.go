@@ -103,37 +103,36 @@ func (r *Repository) Deposit(ctx context.Context, params model.DepositParams) (m
 			Type:   model.TransactionTypeDeposit,
 		}
 
-		transactionRepo := mapper.TransactionToRepo(transaction)
+		repoTran := mapper.TransactionToRepo(transaction)
 
-		res := tx.Clauses(clause.OnConflict{UpdateAll: true}).Create(&transactionRepo)
+		res := tx.Table("transactions").Create(&repoTran)
 		if res.Error != nil {
 			r.logger.Error().Err(res.Error).Msg("fail to create transaction")
 			return fmt.Errorf("fail to create transaction: %w", res.Error)
 		}
 
 		entry := model.TransactionEntry{
-			TransactionID: transaction.ID,
-			AccountID:     transaction.UserID,
+			TransactionID: repoTran.ID,
+			AccountID:     repoTran.UserID,
 			Direction:     model.TransactionEntryDirectionDebit,
-			Amount:        float64(transaction.Amount),
+			Amount:        float64(repoTran.Amount),
 		}
 
 		entryRepo := mapper.TransactionEntryToRepo(entry)
-		res = tx.Clauses(clause.OnConflict{UpdateAll: true}).Create(&entryRepo)
+		res = tx.Table("transaction_entries").Create(&entryRepo)
 		if res.Error != nil {
 			r.logger.Error().Err(res.Error).Msg("fail to create transaction entry")
 			return fmt.Errorf("fail to create transaction entry: %w", res.Error)
 		}
 
-		updateData := model.UpdateTransaction{Status: model.TransactionStatusCompleted}
-		res = tx.Where("id = ?", transaction.ID).Updates(&updateData)
+		res = tx.Table("transactions").Where("id = ?", repoTran.ID).Update("status", model.TransactionStatusCompleted)
 		if res.Error != nil {
 			r.logger.Error().Err(res.Error).Msg("fail to update transaction status")
 			return fmt.Errorf("fail to update transaction status: %w", res.Error)
 		}
 
 		result = model.TransactionDetails{
-			Transaction: mapper.RepoTranToModel(transactionRepo),
+			Transaction: mapper.RepoTranToModel(repoTran),
 			Entries:     mapper.RepoTrEntriesToModel([]repomodel.TransactionEntry{entryRepo}),
 		}
 		return nil
