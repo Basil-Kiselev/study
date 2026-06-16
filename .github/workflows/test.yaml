@@ -1,0 +1,8 @@
+name: trasaction
+on: workflow_dispatch
+jobs:
+  test_job_dev:
+    runs-on: ubuntu-latest
+    steps:
+      - name: test_name
+        run: echo Hello
