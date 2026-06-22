@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"study/Transaction/internal/account"
 	"study/Transaction/internal/model"
 	"time"
 
@@ -14,7 +13,7 @@ import (
 type TransactionService struct {
 	repo           Repository
 	logger         *zerolog.Logger
-	accountService *account.Service
+	accountService AccountService
 	kafka          KafkaPublisher
 }
 
@@ -25,7 +24,7 @@ type AccountResponse struct {
 	Result      bool   `json:"result"`
 }
 
-func New(repo Repository, logger *zerolog.Logger, accountService *account.Service, kafka KafkaPublisher) *TransactionService {
+func New(repo Repository, logger *zerolog.Logger, accountService AccountService, kafka KafkaPublisher) *TransactionService {
 	return &TransactionService{
 		repo:           repo,
 		logger:         logger,
@@ -41,6 +40,10 @@ type Repository interface {
 	Transfer(context.Context, model.TransferParams) (model.TransactionDetails, error)
 	Withdraw(context.Context, model.WithdrawParams) (model.TransactionDetails, error)
 	UpdateTransactionsStatus(context.Context, uint64, model.TransactionStatus) error
+}
+
+type AccountService interface {
+	GetBalance(ctx context.Context, userID uint64) (int64, error)
 }
 
 type KafkaPublisher interface {
