@@ -1,5 +1,5 @@
 services:
-  account:
+  account_db:
     image: postgres:latest
     environment:
       POSTGRES_USER: postgres
@@ -16,7 +16,7 @@ services:
       retries: 5
     networks:
       - app-network
-  auth:
+  auth_db:
     image: postgres:latest
     environment:
       POSTGRES_USER: postgres
@@ -33,7 +33,7 @@ services:
       retries: 5
     networks:
       - app-network
-  transaction:
+  transaction_db:
     image: postgres:latest
     environment:
       POSTGRES_USER: postgres
@@ -85,6 +85,73 @@ services:
       - kafka
     ports:
       - "29093:8080"
+
+  transaction:
+    image: basilientos/transaction:latest
+    build:
+      context: .
+      dockerfile: Transaction/Dockerfile
+    ports:
+      - "50054:8080"
+    environment:
+      DB_DSN: postgres://postgres:postgres@transaction_db:5432/transaction?sslmode=disable
+      ACCOUNT_GRPC_HOST: account:8080
+      ACCOUNT_BROKER_HOST: kafka:9092
+      KAFKA_CINSUMER_GROUP: consumer
+      KAFKA_TRANSACTION_TOPIC: transaction_response
+    depends_on:
+      - transaction_db
+      - kafka
+    networks:
+      - app-network
+
+  account:
+    image: basilientos/account:latest
+    build:
+      context: .
+      dockerfile: Account/Dockerfile
+    ports:
+      - "50051:8080"
+    environment:
+      DB_DSN: postgres://postgres:postgres@account_db:5432/account?sslmode=disable
+      ACCOUNT_BROKER_HOST: kafka:9092
+      KAFKA_CINSUMER_GROUP: consumer-account
+      KAFKA_TRANSACTION_TOPIC: transaction_request
+    depends_on:
+      - account_db
+      - kafka
+    networks:
+      - app-network
+
+  auth:
+    image: basilientos/auth:latest
+    build:
+      context: .
+      dockerfile: Auth/Dockerfile
+    ports:
+      - "50052:8080"
+    environment:
+      JWT_SECRET: secret
+      ACCESS_TOKEN_TTL_MINUTES: 60
+      REFRESH_TOKEN_TTL_DAYS: 30
+      DB_DSN: postgres://postgres:postgres@auth_db:5432/auth?sslmode=disable
+    depends_on:
+      - auth_db
+
+  gateway:
+    image: basilientos/gateway:latest
+    build:
+      context: .
+      dockerfile: Gateway/Dockerfile
+    ports:
+      - "50053:8080"
+    environment:
+      JWT_SECRET: secret
+      ACCOUNT_GRPC_HOST: account:8080
+      AUTH_GRPC_HOST: auth:8080
+      TRANSACTION_GRPC_HOST: transaction:8080
+    networks:
+      - app-network
 
 volumes:
   postgres_account_data:
