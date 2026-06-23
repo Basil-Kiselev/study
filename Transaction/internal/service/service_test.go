@@ -422,7 +422,7 @@ func TestTransactionService_HandleAccountResponse(t *testing.T) {
 				RequestType: "deposit",
 				UserID:      1,
 				OperationID: 1,
-				Result:      true,
+				Success:     true,
 			},
 			setupMocks: func(mr *mocks.MockRepository) {
 				mr.EXPECT().UpdateTransactionsStatus(gomock.Any(), uint64(1), model.TransactionStatusCompleted).Return(nil)
@@ -435,7 +435,7 @@ func TestTransactionService_HandleAccountResponse(t *testing.T) {
 				RequestType: "withdraw",
 				UserID:      1,
 				OperationID: 2,
-				Result:      false,
+				Success:     false,
 			},
 			setupMocks: func(mr *mocks.MockRepository) {
 				mr.EXPECT().UpdateTransactionsStatus(gomock.Any(), uint64(2), model.TransactionStatusFailed).Return(nil)
@@ -448,7 +448,7 @@ func TestTransactionService_HandleAccountResponse(t *testing.T) {
 				RequestType: "deposit",
 				UserID:      1,
 				OperationID: 1,
-				Result:      true,
+				Success:     true,
 			},
 			setupMocks: func(mr *mocks.MockRepository) {
 				mr.EXPECT().UpdateTransactionsStatus(gomock.Any(), uint64(1), model.TransactionStatusCompleted).Return(errors.New("db error"))
@@ -461,7 +461,7 @@ func TestTransactionService_HandleAccountResponse(t *testing.T) {
 				RequestType: "",
 				UserID:      1,
 				OperationID: 1,
-				Result:      true,
+				Success:     true,
 			},
 			setupMocks: func(mr *mocks.MockRepository) {
 
@@ -474,7 +474,7 @@ func TestTransactionService_HandleAccountResponse(t *testing.T) {
 				RequestType: "deposit",
 				UserID:      0,
 				OperationID: 1,
-				Result:      true,
+				Success:     true,
 			},
 			setupMocks: func(mr *mocks.MockRepository) {
 
@@ -487,7 +487,7 @@ func TestTransactionService_HandleAccountResponse(t *testing.T) {
 				RequestType: "deposit",
 				UserID:      1,
 				OperationID: 0,
-				Result:      true,
+				Success:     true,
 			},
 			setupMocks:  func(mr *mocks.MockRepository) {},
 			expectedErr: true,

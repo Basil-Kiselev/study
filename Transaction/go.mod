@@ -12,6 +12,8 @@ require (
 	github.com/pressly/goose/v3 v3.27.1
 	github.com/rs/zerolog v1.35.1
 	github.com/segmentio/kafka-go v0.4.51
+	github.com/stretchr/testify v1.11.1
+	go.uber.org/mock v0.6.0
 	google.golang.org/grpc v1.80.0
 	google.golang.org/protobuf v1.36.11
 	gorm.io/driver/postgres v1.6.0
@@ -29,12 +31,14 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/klauspost/compress v1.18.5 // indirect
+	github.com/kr/text v0.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.21 // indirect
 	github.com/mfridman/interpolate v0.0.2 // indirect
 	github.com/pierrec/lz4/v4 v4.1.26 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/rogpeppe/go-internal v1.15.0 // indirect
 	github.com/sethvargo/go-retry v0.3.0 // indirect
-	github.com/stretchr/testify v1.11.1 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/net v0.53.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
@@ -42,4 +46,5 @@ require (
 	golang.org/x/text v0.36.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260427160629-7cedc36a6bc4 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260420184626-e10c466a9529 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
