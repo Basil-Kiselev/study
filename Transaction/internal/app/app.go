@@ -46,6 +46,16 @@ func (a *App) Run(ctx context.Context) error {
 		return fmt.Errorf("fail to get transaction server: %w", err)
 	}
 
+	kafka, err := a.getKafkaClient()
+	if err != nil {
+		return fmt.Errorf("fail to get kafka cli: %w", err)
+	}
+
+	err = kafka.Subscribe(ctx, a.cfg.KafkaTransactionTopic, a.transactionService.HandleAccountResponse)
+	if err != nil {
+		return fmt.Errorf("fail to subscribe to kafka:%w", err)
+	}
+
 	a.grpcServer = getGRPCServer(tServer)
 
 	listenAddr := fmt.Sprintf("%s:%d", a.cfg.Host, a.cfg.Port)

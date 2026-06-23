@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"study/Account/internal/config"
+	"study/Account/internal/kafka"
 	"study/Account/internal/repository"
 	"study/Account/internal/server"
 	"study/Account/internal/service"
@@ -26,6 +27,7 @@ type App struct {
 	accountService *service.AccountService
 	accountServer  *server.Server
 	grpcServer     *grpc.Server
+	kafka          *kafka.Kafka
 }
 
 func New(cfg *config.Config, logger *zerolog.Logger) *App {
@@ -39,6 +41,16 @@ func (a *App) Run(ctx context.Context) error {
 	accountService, err := a.getAccountService(ctx)
 	if err != nil {
 		return fmt.Errorf("fail to get account service: %w", err)
+	}
+
+	kafka, err := a.getKafkaCli()
+	if err != nil {
+		return fmt.Errorf("fail to get kafka cli: %w", err)
+	}
+
+	err = kafka.Subscribe(ctx, a.cfg.KafkaTransactionTopic, a.accountService.HandleTransaction)
+	if err != nil {
+		a.logger.Error().Err(err).Msg("fail to subscribe to kafka")
 	}
 
 	acSrv := server.NewServer(accountService, a.logger)
@@ -76,7 +88,10 @@ func (a *App) getAccountService(ctx context.Context) (*service.AccountService, e
 		if err != nil {
 			return nil, fmt.Errorf("fail get repo: %w", err)
 		}
-		return service.NewAccountService(repo, a.logger), nil
+
+		kafka, err := a.getKafkaCli()
+
+		return service.NewAccountService(repo, a.logger, kafka), nil
 	}
 
 	return a.accountService, nil
@@ -133,9 +148,25 @@ func getGRPCServer(srv *server.Server) *grpc.Server {
 	return grpcSrv
 }
 
+func (a *App) getKafkaCli() (*kafka.Kafka, error) {
+	if a.kafka == nil {
+		producer := kafka.NewProducer(kafka.DefaultProducerConfig(a.cfg.KafkaBrokers), a.logger)
+		kafka := kafka.New(producer, a.cfg.KafkaBrokers, a.cfg.KafkaGroupID, a.logger)
+		a.kafka = kafka
+		a.logger.Info().Msg("kafka client created")
+	}
+
+	return a.kafka, nil
+}
+
 func (a *App) Close() error {
 	if a.grpcServer != nil {
 		a.grpcServer.GracefulStop()
 	}
+
+	if a.kafka != nil {
+		a.kafka.Close() // Не забудьте закрыть соединение
+	}
+
 	return nil
 }
