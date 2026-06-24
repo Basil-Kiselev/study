@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.yml
+    kompose.version: 1.38.0 (a8f5d1cbd)
+  labels:
+    io.kompose.service: auth
+  name: auth
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: auth
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert -f docker-compose.yml
+        kompose.version: 1.38.0 (a8f5d1cbd)
+      labels:
+        io.kompose.service: auth
+    spec:
+      containers:
+        - env:
+            - name: ACCESS_TOKEN_TTL_MINUTES
+              value: "60"
+            - name: DB_DSN
+              value: postgres://postgres:postgres@auth-db:5432/auth?sslmode=disable
+            - name: GRPC_HOST
+              value: 0.0.0.0
+            - name: GRPC_PORT
+              value: "8080"
+            - name: JWT_SECRET
+              value: secret
+            - name: REFRESH_TOKEN_TTL_DAYS
+              value: "30"
+          image: basilientos/auth:latest
+          name: auth
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+      restartPolicy: Always
